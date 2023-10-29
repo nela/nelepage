@@ -1,12 +1,12 @@
 <script lang="ts">
   import { spring } from "svelte/motion";
 
-  export let img: { alt: string, path: string };
+  export let logoMetadata: { alt: string, path: string, background: string };
   export let deg = 40;
   export let rotation = 0;
 
   let fx = 0, fy = 0;
-  let cubePositions = ['', 'left', 'right', 'top', 'bottom']
+  let cubePositions = ['', 'left', 'right', 'top', 'bottom', 'back']
 
   const boop = (node: HTMLElement) => {
     let booping = spring(0, { stiffness: 0.05, damping: 0.05 });
@@ -38,16 +38,20 @@
 <div class="root">
   <div class="cube"
     use:boop
-    style={`--fx:${fx};--fy:${fy};--deg:${rotation};`}
+    style={`--fx:${fx};--fy:${fy};--deg:${rotation};--bg:${logoMetadata.background}`}
   >
     {#each cubePositions as pos}
-      <div class="area {pos}" >
-        <div class="icon-container">
-          {#each Array(5) as _, index (index)}
-            <img alt={img.alt} src={img.path}/>
-          {/each}
+      {#if pos == 'back' }
+        <div class="area {pos}" />
+      {:else}
+        <div class="area {pos}" >
+          <div class="icon-container">
+            {#each Array(5) as _, index (index)}
+              <img alt={logoMetadata.alt} src={logoMetadata.path}/>
+            {/each}
+          </div>
         </div>
-      </div>
+      {/if}
     {/each}
   </div>
 </div>
@@ -57,6 +61,7 @@
     --fx: 0;
     --fy: 0;
     --deg: 0;
+    --bg: '':
   }
 
   .root {
@@ -86,7 +91,7 @@
     justify-content: center;
     align-items: center;
     border-radius: 8px;
-    background: #3490dc;
+    background: var(--bg);
 
     &.right {
       transform: translateZ(-$cube-area-half)
@@ -108,6 +113,10 @@
     &.top {
       transform: rotateX(90deg) translateZ($cube-area-half)
         translate(0, -$cube-area-half);
+    }
+
+    &.back {
+      transform: translateZ(-$cube-area);
     }
   }
 
