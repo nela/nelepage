@@ -1,11 +1,22 @@
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+
+  font-family: Josefin Sans Variable, Monoton, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  // background-color: #242424;
+  background: none;
+  /* background: conic-gradient(
+    at 0% 0%,
+    #f9f9f9 10%,
+    #f1f1f1 20%,
+    #242424 35%,
+    #343434 55%,
+    #555554 85%,
+    #000 90%
+    ); */
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;

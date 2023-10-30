@@ -10,11 +10,12 @@
     background: string;
     url: string;
   };
-  export let degOnOut = 50;
-  export let degOnMove = 25;
+  export let degOnOut = 1.4;
+  export let degOnMove = 0.6;
   export let rotation = 0;
+  let hw: number, hh: number;
+  let rx: number, ry: number;
 
-  let fx = 0, fy = 0;
   let cubePositions = ["front", "left", "right", "top", "bottom", "back"];
   let visible = false;
   let startX: number, startY: number, startDuration: number, startDelay: number;
@@ -29,21 +30,21 @@
 
   const boop = (node: HTMLElement) => {
     let timeout: number | undefined;
-    let center: { x: number; y: number };
+    let centre: { x: number; y: number };
 
     let booping = spring(0, { stiffness: 0.05, damping: 0.05 });
     let unsubscribe = booping.subscribe((v) => (rotation = v));
 
     const onMove = (e: MouseEvent) => {
       booping.set(degOnMove);
-      fy = center.x < e.x ? 1 : -1;
-      fx = center.y < e.y ? -1 : 1;
+      ry = -(centre.x - e.x) / hw
+      rx = (centre.y - e.y) / hh
     };
 
     const onLeave = (e: MouseEvent) => {
       node.removeEventListener("mousemove", onMove);
-      fy = center.x < e.x ? 1 : -1;
-      fx = center.y < e.y ? -1 : 1;
+      ry = -1 * (centre.x - e.x) / hw
+      rx = (centre.y - e.y) / hh
       booping.set(degOnOut);
       clearTimeout(timeout);
       timeout = setTimeout(() => { booping.set(0); }, 150);
@@ -51,7 +52,9 @@
 
     const onEnter = (_: MouseEvent) => {
       const { x, y, width, height } = node.getBoundingClientRect();
-      center = { x: x + width / 2, y: y + height / 2 };
+      hw = width/2
+      hh = height/2
+      centre = { x: x + hw, y: y + hh};
       node.addEventListener("mousemove", onMove);
     };
 
@@ -83,7 +86,7 @@
     <div
       class="cube"
       use:boop
-      style={`--fx:${fx};--fy:${fy};--deg:${rotation};--bg:${logoMetadata.background}`}
+      style={`--rx:${rx};--ry:${ry};--rot:${rotation};--bg:${logoMetadata.background};`}
     >
       {#each cubePositions as pos}
         {#if pos == "back"}
@@ -106,11 +109,24 @@
           </div>
         {/if}
       {/each}
+      <!-- <div class="area front">
+        <div class="icon-container">
+          {#each Array(5) as _, index (index)}
+            <img alt={logoMetadata.alt} src={logoMetadata.path} />
+          {/each}
+        </div>
+      </div> -->
     </div>
   </div>
 {/if}
 
 <style lang="scss">
+  :root {
+    --rot: 0;
+    --rx: 0;
+    --ry: 0;
+  }
+
   .root {
     position: relative;
     padding: 10px;
@@ -123,11 +139,12 @@
     height: 100%;
     width: 100%;
     transition: transform 500ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    transform: rotate3d(var(--fx), var(--fy), 0, calc(var(--deg) * 1deg))
-      skewX(calc(var(--fy) * var(--deg) / 10 * 1deg))
-      skewY(calc(var(--fx) * var(--deg) / 10 * 1deg));
+    transform: rotateX(calc(var(--rx) * var(--rot) * 1rad))
+      rotateY(calc(var(--rot) * 1rad * var(--ry)))
+      skewY(calc(var(--rot) * 0.1rad))
+      skewX(calc(var(--rot) * 0.1rad));
     transform-style: preserve-3d;
-    transform-origin: center;
+    transform-origin: center center;
   }
 
   .area {
@@ -139,6 +156,7 @@
     align-items: center;
     border-radius: 8px;
     background: var(--bg);
+    transform-origin: center center;;
 
     &.front {
       z-index: 0;
@@ -178,12 +196,17 @@
     position: relative;
 
     transition: transform 500ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    transform-origin: center;
-    transform: skewX(calc(var(--fy) * var(--deg) / 5 * 1deg))
-      skewY(calc(var(--fx) * var(--deg) / 5 * 1deg));
+    transform-origin: center center;
+    // transform: skewX(calc(var(--fy) * var(--deg) / 5 * 1deg))
+    //   skewY(calc(var(--fx) * var(--deg) / 5 * 1deg));
     transform-style: preserve-3d;
+    transform: rotateX(calc(var(--rx) * var(--rot) * 1rad))
+      rotateY(calc(var(--rot)* 1rad * var(--ry)))
+      skewY(calc(var(--rot) * 0.1rad))
+      skewX(calc(var(--rot) * 0.1rad));
 
     & img {
+      transition: transform 500ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
       position: absolute;
       width: 67%;
       height: 67%;
@@ -191,8 +214,7 @@
 
     @for $i from 2 through 5 {
       & img:nth-child(#{$i}) {
-        transition: transform 500ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        transform: translate(calc(var(--deg) * $i * 0.1px));
+        transform: translate(calc(var(--rot) * $i * 2.5px));
         opacity: calc(1 - ($i/10));
       }
     }
