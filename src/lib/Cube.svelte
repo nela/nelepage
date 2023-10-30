@@ -1,69 +1,116 @@
 <script lang="ts">
+  import { onMount } from "svelte";
+  import { elasticOut } from "svelte/easing";
   import { spring } from "svelte/motion";
+  import { fly } from "svelte/transition";
 
-  export let logoMetadata: { alt: string, path: string, background: string };
-  export let deg = 40;
+  export let logoMetadata: {
+    alt: string;
+    path: string;
+    background: string;
+    url: string;
+  };
+  export let degOnOut = 50;
+  export let degOnMove = 25;
   export let rotation = 0;
 
   let fx = 0, fy = 0;
-  let cubePositions = ['', 'left', 'right', 'top', 'bottom', 'back']
+  let cubePositions = ["front", "left", "right", "top", "bottom", "back"];
+  let visible = false;
+  let startX: number, startY: number, startDuration: number, startDelay: number;
+
+  onMount(() => {
+    startX = Math.random() * 1000 - 500;
+    startY = Math.random() * 1000 - 500;
+    startDuration = Math.random() * 1000 + 1000;
+    startDelay = 0;
+    visible = true;
+  });
 
   const boop = (node: HTMLElement) => {
-    let booping = spring(0, { stiffness: 0.05, damping: 0.05 });
     let timeout: number | undefined;
-    const unsubscribe = booping.subscribe((v) => rotation = v);
+    let center: { x: number; y: number };
 
-    const onEnter = (e: MouseEvent) => {
-      const { x, y, width, height } = node.getBoundingClientRect();
+    let booping = spring(0, { stiffness: 0.05, damping: 0.05 });
+    let unsubscribe = booping.subscribe((v) => (rotation = v));
 
-      fy = x + width / 2 < e.x ? -1 : 1;
-      fx = y + height / 2 < e.y ? -1 : 1;
-
-      booping.set(deg);
-      clearTimeout(timeout);
-      timeout = setTimeout(() => { booping.set(0) }, 150);
+    const onMove = (e: MouseEvent) => {
+      booping.set(degOnMove);
+      fy = center.x < e.x ? 1 : -1;
+      fx = center.y < e.y ? -1 : 1;
     };
 
+    const onLeave = (e: MouseEvent) => {
+      node.removeEventListener("mousemove", onMove);
+      fy = center.x < e.x ? 1 : -1;
+      fx = center.y < e.y ? -1 : 1;
+      booping.set(degOnOut);
+      clearTimeout(timeout);
+      timeout = setTimeout(() => { booping.set(0); }, 150);
+    };
+
+    const onEnter = (_: MouseEvent) => {
+      const { x, y, width, height } = node.getBoundingClientRect();
+      center = { x: x + width / 2, y: y + height / 2 };
+      node.addEventListener("mousemove", onMove);
+    };
+
+    node.addEventListener("mouseleave", onLeave);
     node.addEventListener("mouseenter", onEnter);
 
     return {
       destroy: () => {
         unsubscribe();
+        node.removeEventListener("mouseleave", onLeave);
         node.removeEventListener("mouseenter", onEnter);
-      }
+      },
     };
   };
 </script>
 
-<div class="root">
-  <div class="cube"
-    use:boop
-    style={`--fx:${fx};--fy:${fy};--deg:${rotation};--bg:${logoMetadata.background}`}
+{#if visible}
+  <div
+    in:fly={{
+      y: startY,
+      x: startX,
+      duration: startDuration,
+      delay: startDelay,
+      opacity: 0.3,
+      easing: elasticOut,
+    }}
+    class="root"
   >
-    {#each cubePositions as pos}
-      {#if pos == 'back' }
-        <div class="area {pos}" />
-      {:else}
-        <div class="area {pos}" >
-          <div class="icon-container">
-            {#each Array(5) as _, index (index)}
-              <img alt={logoMetadata.alt} src={logoMetadata.path}/>
-            {/each}
+    <div
+      class="cube"
+      use:boop
+      style={`--fx:${fx};--fy:${fy};--deg:${rotation};--bg:${logoMetadata.background}`}
+    >
+      {#each cubePositions as pos}
+        {#if pos == "back"}
+          <div class="area {pos}" />
+        {:else if pos == "front"}
+          <a class="area front" href={logoMetadata.url}>
+            <div class="icon-container">
+              {#each Array(5) as _, index (index)}
+                <img alt={logoMetadata.alt} src={logoMetadata.path} />
+              {/each}
+            </div>
+          </a>
+        {:else}
+          <div class="area {pos}">
+            <div class="icon-container">
+              {#each Array(5) as _, index (index)}
+                <img alt={logoMetadata.alt} src={logoMetadata.path} />
+              {/each}
+            </div>
           </div>
-        </div>
-      {/if}
-    {/each}
+        {/if}
+      {/each}
+    </div>
   </div>
-</div>
+{/if}
 
 <style lang="scss">
-  :root {
-    --fx: 0;
-    --fy: 0;
-    --deg: 0;
-    --bg: '':
-  }
-
   .root {
     position: relative;
     padding: 10px;
@@ -75,10 +122,10 @@
   .cube {
     height: 100%;
     width: 100%;
-    transform:
-      rotate3d(var(--fx), var(--fy), 0, calc(var(--deg) * 1deg))
-      skewX(calc(var(--fy) * var(--deg)/10 * 1deg))
-      skewY(calc(var(--fx) * var(--deg)/10 * 1deg));
+    transition: transform 500ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transform: rotate3d(var(--fx), var(--fy), 0, calc(var(--deg) * 1deg))
+      skewX(calc(var(--fy) * var(--deg) / 10 * 1deg))
+      skewY(calc(var(--fx) * var(--deg) / 10 * 1deg));
     transform-style: preserve-3d;
     transform-origin: center;
   }
@@ -93,15 +140,17 @@
     border-radius: 8px;
     background: var(--bg);
 
+    &.front {
+      z-index: 0;
+    }
+
     &.right {
-      transform: translateZ(-$cube-area-half)
-        translate($cube-area-half, 0)
+      transform: translateZ(-$cube-area-half) translate($cube-area-half, 0)
         rotateY(90deg);
     }
 
     &.left {
-      transform: translateZ(-$cube-area-half)
-        translate(-$cube-area-half, 0)
+      transform: translateZ(-$cube-area-half) translate(-$cube-area-half, 0)
         rotateY(-90deg);
     }
 
@@ -128,9 +177,10 @@
     height: 100%;
     position: relative;
 
+    transition: transform 500ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
     transform-origin: center;
-    transform: skewX(calc(var(--fy) * var(--deg)/5 * 1deg))
-      skewY(calc(var(--fx) * var(--deg)/5 * 1deg));
+    transform: skewX(calc(var(--fy) * var(--deg) / 5 * 1deg))
+      skewY(calc(var(--fx) * var(--deg) / 5 * 1deg));
     transform-style: preserve-3d;
 
     & img {
@@ -141,11 +191,10 @@
 
     @for $i from 2 through 5 {
       & img:nth-child(#{$i}) {
+        transition: transform 500ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
         transform: translate(calc(var(--deg) * $i * 0.1px));
         opacity: calc(1 - ($i/10));
       }
     }
   }
-
-
 </style>
