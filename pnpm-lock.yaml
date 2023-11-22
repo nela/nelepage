@@ -4,6 +4,14 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+dependencies:
+  '@fontsource-variable/josefin-sans':
+    specifier: ^5.0.18
+    version: 5.0.18
+  '@fontsource/audiowide':
+    specifier: ^5.0.17
+    version: 5.0.17
+
 devDependencies:
   '@sveltejs/vite-plugin-svelte':
     specifier: ^2.4.2
@@ -243,6 +251,14 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /@fontsource-variable/josefin-sans@5.0.18:
+    resolution: {integrity: sha512-dXBhfj9kbc9/+V1JzR/aSU0ZFLcqXjSWd6ylKaue+8crM+BbXkMWX2nKhnbOwb+2t7Yuzy8/vAw3CmE2Q8h2iQ==}
+    dev: false
+
+  /@fontsource/audiowide@5.0.17:
+    resolution: {integrity: sha512-EBZU6P/sKVnmEhdwR4qLRne5OlY1hqY5rLuarutHESPFeCqNOkR6elFAOn/cnRdnt5Ks962EKccS5zL5ffZITA==}
+    dev: false
 
   /@jridgewell/gen-mapping@0.3.3:
     resolution: {integrity: sha512-HLhSWOLRi875zjjMG/r+Nv0oCW8umGb0BgEhyX3dDX3egwZtB8PqLnjz3yedt8R5StBrzcg4aBpnh8UA9D1BoQ==}

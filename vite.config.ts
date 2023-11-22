@@ -9,6 +9,7 @@ export default defineConfig({
       scss: {
         additionalData: `
           @use 'src/scss/variables' as *;
+          @use '@fontsource-variable/josefin-sans';
         `
       }
     }

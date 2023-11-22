@@ -1,8 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { elasticOut } from "svelte/easing";
   import { spring } from "svelte/motion";
-  import { fly } from "svelte/transition";
 
   export let logoMetadata: {
     alt: string;
@@ -10,8 +8,8 @@
     background: string;
     url: string;
   };
-  export let degOnOut = 1.4;
-  export let degOnMove = 0.6;
+  export let degOnOut = 0.8;
+  export let degOnMove = 0.3;
   export let rotation = 0;
   let hw: number, hh: number;
   let rx: number, ry: number;
@@ -32,7 +30,7 @@
     let timeout: number | undefined;
     let centre: { x: number; y: number };
 
-    let booping = spring(0, { stiffness: 0.05, damping: 0.05 });
+    let booping = spring(0, { stiffness: 0.05, damping: 0.09 });
     let unsubscribe = booping.subscribe((v) => (rotation = v));
 
     const onMove = (e: MouseEvent) => {
@@ -71,54 +69,42 @@
   };
 </script>
 
-{#if visible}
+<div class="cube-wrapper" >
   <div
-    in:fly={{
-      y: startY,
-      x: startX,
-      duration: startDuration,
-      delay: startDelay,
-      opacity: 0.3,
-      easing: elasticOut,
-    }}
-    class="root"
+    class="cube"
+    use:boop
+    style={`--rx:${rx};--ry:${ry};--rot:${rotation};--bg:${logoMetadata.background};`}
   >
-    <div
-      class="cube"
-      use:boop
-      style={`--rx:${rx};--ry:${ry};--rot:${rotation};--bg:${logoMetadata.background};`}
-    >
-      {#each cubePositions as pos}
-        {#if pos == "back"}
-          <div class="area {pos}" />
-        {:else if pos == "front"}
-          <a class="area front" href={logoMetadata.url}>
-            <div class="icon-container">
-              {#each Array(5) as _, index (index)}
-                <img alt={logoMetadata.alt} src={logoMetadata.path} />
-              {/each}
-            </div>
-          </a>
-        {:else}
-          <div class="area {pos}">
-            <div class="icon-container">
-              {#each Array(5) as _, index (index)}
-                <img alt={logoMetadata.alt} src={logoMetadata.path} />
-              {/each}
-            </div>
+    {#each cubePositions as pos}
+      {#if pos == "back"}
+        <div class="area {pos}" />
+      {:else if pos == "front"}
+        <a class="area front" href={logoMetadata.url}>
+          <div class="icon-container">
+            {#each Array(5) as _, index (index)}
+              <img alt={logoMetadata.alt} src={logoMetadata.path} />
+            {/each}
           </div>
-        {/if}
-      {/each}
-      <!-- <div class="area front">
-        <div class="icon-container">
-          {#each Array(5) as _, index (index)}
-            <img alt={logoMetadata.alt} src={logoMetadata.path} />
-          {/each}
+        </a>
+      {:else}
+        <div class="area {pos}">
+          <div class="icon-container">
+            {#each Array(5) as _, index (index)}
+              <img alt={logoMetadata.alt} src={logoMetadata.path} />
+            {/each}
+          </div>
         </div>
-      </div> -->
-    </div>
+      {/if}
+    {/each}
+    <!-- <div class="area front">
+      <div class="icon-container">
+        {#each Array(5) as _, index (index)}
+          <img alt={logoMetadata.alt} src={logoMetadata.path} />
+        {/each}
+      </div>
+    </div> -->
   </div>
-{/if}
+</div>
 
 <style lang="scss">
   :root {
@@ -127,12 +113,12 @@
     --ry: 0;
   }
 
-  .root {
+  .cube-wrapper {
     position: relative;
     padding: 10px;
     margin: 1rem;
-    width: $root-width;
-    height: $root-height;
+    width: $cube-wrapper-width;
+    height: $cube-wrapper-height;
   }
 
   .cube {
@@ -197,8 +183,6 @@
 
     transition: transform 500ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
     transform-origin: center center;
-    // transform: skewX(calc(var(--fy) * var(--deg) / 5 * 1deg))
-    //   skewY(calc(var(--fx) * var(--deg) / 5 * 1deg));
     transform-style: preserve-3d;
     transform: rotateX(calc(var(--rx) * var(--rot) * 1rad))
       rotateY(calc(var(--rot)* 1rad * var(--ry)))
